@@ -1,0 +1,24 @@
+apply plugin: libs.plugins.detekt.get().pluginId
+
+detekt {
+    // Builds the AST in parallel. Rules are always executed in parallel.
+    // Can lead to speedups in larger projects. `false` by default.
+    parallel = true
+
+    // The directories where detekt looks for source files.
+    source = files(
+            "src/main/kotlin",
+            "src/main/java"
+    )
+
+    // Define the detekt configuration(s).
+    config = files("$project.rootDir/detekt/config.yml")
+
+    // If set to `true` the build does not fail when the
+    // maxIssues count was reached. Defaults to `false`.
+    ignoreFailures = false
+}
+
+dependencies {
+    detektPlugins(libs.detekt.formatting)
+}
