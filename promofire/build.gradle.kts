@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,10 @@ plugins {
 }
 
 apply { from(rootProject.file("detekt/config.gradle")) }
+
+kotlin {
+    explicitApi = ExplicitApiMode.Strict
+}
 
 android {
     namespace = "io.promofire"
