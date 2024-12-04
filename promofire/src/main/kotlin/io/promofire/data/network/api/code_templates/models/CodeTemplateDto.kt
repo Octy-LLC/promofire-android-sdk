@@ -15,7 +15,7 @@ internal data class CodeTemplateDto(
     val createdAt: Date,
     val ttl: Int,
     val amount: String,
-    val hasMutablePayloads: Boolean,
+    val hasMutablePayload: Boolean,
     val isUsableByCustomers: Boolean,
     val description: String?,
     val payload: JsonElement,
