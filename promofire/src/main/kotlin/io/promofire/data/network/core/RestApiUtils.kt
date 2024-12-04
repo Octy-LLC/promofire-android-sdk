@@ -9,8 +9,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.promofire.data.network.core.exceptions.PromofireNetworkException
+import io.promofire.data.network.core.serializers.StringListSerializer
+import io.promofire.models.exceptions.PromofireNetworkException
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.Serializable
 
 internal suspend inline fun <reified Request, reified Response> HttpClient.safePost(
     endpoint: String,
@@ -47,5 +49,24 @@ private suspend inline fun <reified T> NetworkResult<HttpResponse>.body(): Netwo
 
 private suspend inline fun <reified T> HttpResponse.safeBody(): NetworkResult<T> = when (status.value) {
     in 200..299 -> NetworkResult.Success(body())
-    else -> NetworkResult.Error(body<PromofireNetworkException>())
+    else -> {
+        val exceptionDto = body<PromofireNetworkExceptionDto>()
+        NetworkResult.Error(exceptionDto.toDomain())
+    }
 }
+
+@Serializable
+internal class PromofireNetworkExceptionDto(
+    @Serializable(StringListSerializer::class)
+    val messages: List<String>? = null,
+    @Serializable(StringListSerializer::class)
+    val message: List<String>? = null,
+    val error: String?,
+    val statusCode: Int,
+)
+
+private fun PromofireNetworkExceptionDto.toDomain(): PromofireNetworkException = PromofireNetworkException(
+    message = message?.joinToString(separator = " | ") ?: messages?.joinToString(separator = " | "),
+    error = error,
+    statusCode = statusCode,
+)
