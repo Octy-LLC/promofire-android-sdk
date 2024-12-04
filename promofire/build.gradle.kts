@@ -18,6 +18,16 @@ android {
 
     defaultConfig {
         minSdk = 21
+
+        buildConfigField(
+            "String",
+            "VERSION_NAME",
+            "\"0.0.1\""
+        )
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
