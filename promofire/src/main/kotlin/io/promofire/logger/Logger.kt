@@ -9,6 +9,8 @@ internal interface Logger {
 
     companion object : Logger by AndroidConsoleLogger()
 
+    var isDebug: Boolean
+
     fun log(level: PromofireLogLevel, message: String, throwable: Throwable? = null)
 }
 

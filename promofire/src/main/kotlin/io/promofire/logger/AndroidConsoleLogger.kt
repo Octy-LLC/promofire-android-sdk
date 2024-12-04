@@ -8,7 +8,10 @@ internal class AndroidConsoleLogger : Logger {
         private const val TAG = "Promofire"
     }
 
+    override var isDebug: Boolean = false
+
     override fun log(level: PromofireLogLevel, message: String, throwable: Throwable?) {
+        if (!isDebug) return
         when (level) {
             PromofireLogLevel.VERBOSE -> Log.v(TAG, message, throwable)
             PromofireLogLevel.INFO -> Log.i(TAG, message, throwable)
