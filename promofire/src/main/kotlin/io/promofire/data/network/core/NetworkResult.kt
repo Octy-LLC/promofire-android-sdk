@@ -1,5 +1,6 @@
 package io.promofire.data.network.core
 
+import io.promofire.utils.PromofireResult
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -24,3 +25,12 @@ internal fun <T> NetworkResult<T>.isSuccess(): Boolean {
     }
     return this is NetworkResult.Success
 }
+
+internal inline fun <T, R> NetworkResult<T>.mapToPromofireResult(
+    transform: ((T) -> R),
+): PromofireResult<R> = when (this) {
+    is NetworkResult.Success -> PromofireResult.Success(transform(data))
+    is NetworkResult.Error -> PromofireResult.Error(throwable)
+}
+
+internal fun <T> NetworkResult<T>.mapToPromofireResult(): PromofireResult<T> = mapToPromofireResult { it }
