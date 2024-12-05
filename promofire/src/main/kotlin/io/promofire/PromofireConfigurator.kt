@@ -23,6 +23,7 @@ internal class PromofireConfigurator {
         val sdkAuthRequest = SdkAuthRequestDto(config.projectName, config.secret)
         val authResult = authApi.signInWithSdk(sdkAuthRequest)
         if (!authResult.isSuccess()) {
+            Promofire.isConfigured = false
             Logger.e("Error during SDK configuration", authResult.throwable)
             return
         }
@@ -31,6 +32,7 @@ internal class PromofireConfigurator {
         val createPresetRequest = CreatePresetRequestDto(PLATFORM_ANDROID)
         val customersResult = customersApi.createCustomerPreset(createPresetRequest)
         if (!customersResult.isSuccess()) {
+            Promofire.isConfigured = false
             Logger.e("Error during SDK configuration", customersResult.throwable)
             return
         }
@@ -39,6 +41,7 @@ internal class PromofireConfigurator {
         val createCustomerRequest = createCustomerRequest(config.userInfo, deviceSpecsProvider)
         val createCustomerResult = customersApi.upsertCustomer(createCustomerRequest)
         if (!createCustomerResult.isSuccess()) {
+            Promofire.isConfigured = false
             Logger.e("Error during SDK configuration", createCustomerResult.throwable)
             return
         }
