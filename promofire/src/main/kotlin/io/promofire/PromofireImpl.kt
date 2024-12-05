@@ -1,7 +1,10 @@
 package io.promofire
 
 import io.promofire.config.PromofireConfig
+import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.utils.DeviceSpecsProvider
+import io.promofire.utils.PromofireResult
+import io.promofire.utils.ResultCallback
 import io.promofire.utils.promofireScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -28,13 +31,48 @@ internal class PromofireImpl {
             lock.writeLock().unlock()
         }
 
+    private var isCodeGenerationAvailable: Boolean = false
+        get() = try {
+            lock.readLock().lock()
+            field
+        } finally {
+            lock.readLock().unlock()
+        }
+        set(value) = try {
+            lock.writeLock().lock()
+            field = value
+        } finally {
+            lock.writeLock().unlock()
+        }
+
+    private val codeGenerationInteractor by lazy {
+        CodeGenerationInteractor()
+    }
+
     fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
         require(configurationJob == null) { "Promofire is already configured" }
         configurationJob = promofireScope.launch {
             promofireConfigurator.configureSdk(config, deviceSpecsProvider)
             configurationJob = null
+            isCodeGenerationAvailable { /* Ignore */ }
         }
     }
+
+    fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
+        if (isCodeGenerationAvailable) {
+            callback.onResult(PromofireResult.Success(true))
+            return
+        }
+        promofireScope.launch {
+            waitForConfiguration()
+            val isCodeGenerationAvailableResult = codeGenerationInteractor.isCodeGenerationAvailable()
+            if (isCodeGenerationAvailableResult is PromofireResult.Success) {
+                isCodeGenerationAvailable = isCodeGenerationAvailableResult.value
+            }
+            callback.onResult(isCodeGenerationAvailableResult)
+        }
+    }
+
     private suspend fun waitForConfiguration() {
         if (!Promofire.isConfigured) configurationJob?.join()
     }

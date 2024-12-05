@@ -5,6 +5,7 @@ import android.content.Context
 import io.promofire.config.PromofireConfig
 import io.promofire.logger.Logger
 import io.promofire.utils.AndroidDeviceSpecsProvider
+import io.promofire.utils.ResultCallback
 import kotlin.concurrent.Volatile
 
 public object Promofire {
@@ -27,5 +28,15 @@ public object Promofire {
         isConfigured = true
         val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
         promofireImpl.configureSdk(config, deviceSpecsProvider)
+    }
+
+    public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
+        checkIsConfigured()
+
+        promofireImpl.isCodeGenerationAvailable(callback)
+    }
+
+    private fun checkIsConfigured() {
+        require(isConfigured) { "Promofire is not configured" }
     }
 }
