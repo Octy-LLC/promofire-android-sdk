@@ -7,7 +7,7 @@ import io.promofire.data.network.api.codes.models.CodesDto
 import io.promofire.data.network.api.codes.models.CreateCodeDto
 import io.promofire.data.network.api.codes.models.CreateCodesDto
 import io.promofire.data.network.api.codes.models.RedeemCodeRequestDto
-import io.promofire.data.network.api.codes.models.RedeemsDto
+import io.promofire.data.network.api.codes.models.CodeRedeemsDto
 import io.promofire.data.network.core.EmptyNetworkResult
 import io.promofire.data.network.core.NetworkResult
 import io.promofire.data.network.core.safeGet
@@ -30,14 +30,14 @@ internal interface CodesApi {
         to: String,
         codeValue: String? = null,
         redeemerId: String? = null,
-    ): NetworkResult<RedeemsDto>
+    ): NetworkResult<CodeRedeemsDto>
 
     suspend fun getMyRedeems(
         limit: Int,
         offset: Int,
         from: String,
         to: String,
-    ): NetworkResult<RedeemsDto>
+    ): NetworkResult<CodeRedeemsDto>
 }
 
 internal class CodesApiImpl(
@@ -68,7 +68,7 @@ internal class CodesApiImpl(
         to: String,
         codeValue: String?,
         redeemerId: String?,
-    ): NetworkResult<RedeemsDto> = httpClient.safeGet("codes/redeems") {
+    ): NetworkResult<CodeRedeemsDto> = httpClient.safeGet("codes/redeems") {
         parameter("limit", limit)
         parameter("offset", offset)
         parameter("from", from)
@@ -82,7 +82,7 @@ internal class CodesApiImpl(
         offset: Int,
         from: String,
         to: String,
-    ): NetworkResult<RedeemsDto> = httpClient.safeGet("codes/redeems/me") {
+    ): NetworkResult<CodeRedeemsDto> = httpClient.safeGet("codes/redeems/me") {
         parameter("limit", limit)
         parameter("offset", offset)
         parameter("from", from)

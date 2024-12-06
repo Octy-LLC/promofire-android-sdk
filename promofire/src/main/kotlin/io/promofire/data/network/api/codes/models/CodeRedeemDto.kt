@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import java.util.Date
 
 @Serializable
-internal data class RedeemDto(
+internal data class CodeRedeemDto(
     val id: String,
     val redeemerId: String,
     val code: String,
