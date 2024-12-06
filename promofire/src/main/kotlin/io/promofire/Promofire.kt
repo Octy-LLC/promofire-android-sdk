@@ -5,6 +5,7 @@ import android.content.Context
 import io.promofire.config.PromofireConfig
 import io.promofire.logger.Logger
 import io.promofire.models.CodeRedeems
+import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
 import io.promofire.utils.AndroidDeviceSpecsProvider
@@ -62,6 +63,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.getCampaigns(limit, offset, callback)
+    }
+
+    public fun getCampaignBy(id: String, callback: ResultCallback<CodeTemplate>) {
+        checkIsConfigured()
+
+        promofireImpl.getCampaignBy(id, callback)
     }
 
     private fun checkIsConfigured() {

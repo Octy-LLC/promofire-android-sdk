@@ -5,6 +5,7 @@ import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
 import io.promofire.models.CodeRedeems
+import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
 import io.promofire.utils.DeviceSpecsProvider
@@ -114,6 +115,14 @@ internal class PromofireImpl {
             waitForConfiguration()
             val codeTemplatesResult = codeTemplatesInteractor.getCampaigns(limit, offset)
             callback.onResult(codeTemplatesResult)
+        }
+    }
+
+    fun getCampaignBy(id: String, callback: ResultCallback<CodeTemplate>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val codeTemplateResult = codeTemplatesInteractor.getCampaignBy(id)
+            callback.onResult(codeTemplateResult)
         }
     }
 
