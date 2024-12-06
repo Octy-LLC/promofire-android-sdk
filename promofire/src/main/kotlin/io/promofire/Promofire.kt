@@ -10,6 +10,7 @@ import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
 import io.promofire.models.params.GenerateCodeParams
+import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.ResultCallback
 import java.util.Date
@@ -77,6 +78,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.generateCode(params, callback)
+    }
+
+    public fun generateCodes(params: GenerateCodesParams, callback: ResultCallback<List<Code>>) {
+        checkIsConfigured()
+
+        promofireImpl.generateCodes(params, callback)
     }
 
     private fun checkIsConfigured() {
