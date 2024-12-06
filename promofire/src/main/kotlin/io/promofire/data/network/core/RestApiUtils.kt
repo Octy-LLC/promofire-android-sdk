@@ -61,7 +61,7 @@ internal class PromofireNetworkExceptionDto(
     val messages: List<String>? = null,
     @Serializable(StringListSerializer::class)
     val message: List<String>? = null,
-    val error: String?,
+    val error: String? = null,
     val statusCode: Int,
 )
 
