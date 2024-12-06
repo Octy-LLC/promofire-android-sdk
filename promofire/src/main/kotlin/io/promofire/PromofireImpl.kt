@@ -4,11 +4,13 @@ import io.promofire.config.PromofireConfig
 import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
+import io.promofire.interactors.CustomerInteractor
 import io.promofire.models.Code
 import io.promofire.models.CodeRedeems
 import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
+import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.DeviceSpecsProvider
@@ -66,6 +68,10 @@ internal class PromofireImpl {
 
     private val codeTemplatesInteractor by lazy {
         CodeTemplatesInteractor()
+    }
+
+    private val customerInteractor by lazy {
+        CustomerInteractor()
     }
 
     fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
@@ -153,6 +159,14 @@ internal class PromofireImpl {
             if (redeemCodeResult is PromofireResult.Error) {
                 callback.onResult(redeemCodeResult.error)
             }
+        }
+    }
+
+    fun getCurrentUser(callback: ResultCallback<Customer>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val currentUserResult = customerInteractor.getCurrentUser()
+            callback.onResult(currentUserResult)
         }
     }
 

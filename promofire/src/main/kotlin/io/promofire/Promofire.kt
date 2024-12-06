@@ -9,6 +9,7 @@ import io.promofire.models.CodeRedeems
 import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
+import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
@@ -91,6 +92,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.redeemCode(codeValue, callback)
+    }
+
+    public fun getCurrentUser(callback: ResultCallback<Customer>) {
+        checkIsConfigured()
+
+        promofireImpl.getCurrentUser(callback)
     }
 
     private fun checkIsConfigured() {
