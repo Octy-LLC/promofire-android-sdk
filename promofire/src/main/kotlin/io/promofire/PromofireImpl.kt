@@ -2,7 +2,9 @@ package io.promofire
 
 import io.promofire.config.PromofireConfig
 import io.promofire.interactors.CodeGenerationInteractor
+import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
+import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.PromofireResult
@@ -55,6 +57,10 @@ internal class PromofireImpl {
         CodesInteractor()
     }
 
+    private val codeTemplatesInteractor by lazy {
+        CodeTemplatesInteractor()
+    }
+
     fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
         require(configurationJob == null) { "Promofire is already configured" }
         configurationJob = promofireScope.launch {
@@ -84,6 +90,14 @@ internal class PromofireImpl {
             waitForConfiguration()
             val currentUserCodesResult = codesInteractor.getCurrentUserCodes(limit, offset)
             callback.onResult(currentUserCodesResult)
+        }
+    }
+
+    fun getCampaigns(limit: Int, offset: Int, callback: ResultCallback<CodeTemplates>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val codeTemplatesResult = codeTemplatesInteractor.getCampaigns(limit, offset)
+            callback.onResult(codeTemplatesResult)
         }
     }
 
