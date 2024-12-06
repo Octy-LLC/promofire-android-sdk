@@ -32,6 +32,22 @@ internal class CodesInteractor {
     ): PromofireResult<CodeRedeems> = codesApi.getMyRedeems(limit, offset, from.toIsoString(), to.toIsoString())
         .mapToPromofireResult { it.toModel() }
 
+    suspend fun getCodeRedeems(
+        limit: Int,
+        offset: Int,
+        from: Date,
+        to: Date,
+        codeValue: String?,
+        redeemerId: String?,
+    ): PromofireResult<CodeRedeems> = codesApi.getRedeems(
+        limit = limit,
+        offset = offset,
+        from = from.toIsoString(),
+        to = to.toIsoString(),
+        codeValue = codeValue,
+        redeemerId = redeemerId,
+    ).mapToPromofireResult { it.toModel() }
+
     suspend fun generateCode(params: GenerateCodeParams): PromofireResult<Code> {
         return codesApi.createCode(params.toDto()).mapToPromofireResult { it.toModel() }
     }

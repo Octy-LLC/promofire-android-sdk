@@ -107,6 +107,20 @@ public object Promofire {
         promofireImpl.updateCurrentUser(params, callback)
     }
 
+    public fun getCodeRedeems(
+        limit: Int,
+        offset: Int,
+        from: Date,
+        to: Date,
+        codeValue: String? = null,
+        redeemerId: String? = null,
+        callback: ResultCallback<CodeRedeems>,
+    ) {
+        checkIsConfigured()
+
+        promofireImpl.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId, callback)
+    }
+
     private fun checkIsConfigured() {
         require(isConfigured) { "Promofire is not configured" }
     }

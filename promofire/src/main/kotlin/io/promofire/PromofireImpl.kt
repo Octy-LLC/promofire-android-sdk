@@ -179,6 +179,22 @@ internal class PromofireImpl {
         }
     }
 
+    fun getCodeRedeems(
+        limit: Int,
+        offset: Int,
+        from: Date,
+        to: Date,
+        codeValue: String?,
+        redeemerId: String?,
+        callback: ResultCallback<CodeRedeems>,
+    ) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val codeRedeemsResult = codesInteractor.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId)
+            callback.onResult(codeRedeemsResult)
+        }
+    }
+
     private suspend fun waitForConfiguration() {
         if (!Promofire.isConfigured) configurationJob?.join()
     }
