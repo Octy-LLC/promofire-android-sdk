@@ -4,10 +4,12 @@ import android.app.Application
 import android.content.Context
 import io.promofire.config.PromofireConfig
 import io.promofire.logger.Logger
+import io.promofire.models.Code
 import io.promofire.models.CodeRedeems
 import io.promofire.models.CodeTemplate
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
+import io.promofire.models.params.GenerateCodeParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.ResultCallback
 import java.util.Date
@@ -69,6 +71,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.getCampaignBy(id, callback)
+    }
+
+    public fun generateCode(params: GenerateCodeParams, callback: ResultCallback<Code>) {
+        checkIsConfigured()
+
+        promofireImpl.generateCode(params, callback)
     }
 
     private fun checkIsConfigured() {
