@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.promofire.config.PromofireConfig
 import io.promofire.logger.Logger
+import io.promofire.models.Codes
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.ResultCallback
 import kotlin.concurrent.Volatile
@@ -34,6 +35,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.isCodeGenerationAvailable(callback)
+    }
+
+    public fun getCurrentUserCodes(limit: Int, offset: Int, callback: ResultCallback<Codes>) {
+        checkIsConfigured()
+
+        promofireImpl.getCurrentUserCodes(limit, offset, callback)
     }
 
     private fun checkIsConfigured() {
