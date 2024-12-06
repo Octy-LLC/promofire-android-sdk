@@ -4,6 +4,7 @@ import io.promofire.config.PromofireConfig
 import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
+import io.promofire.models.CodeRedeems
 import io.promofire.models.CodeTemplates
 import io.promofire.models.Codes
 import io.promofire.utils.DeviceSpecsProvider
@@ -12,6 +13,7 @@ import io.promofire.utils.ResultCallback
 import io.promofire.utils.promofireScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -90,6 +92,20 @@ internal class PromofireImpl {
             waitForConfiguration()
             val currentUserCodesResult = codesInteractor.getCurrentUserCodes(limit, offset)
             callback.onResult(currentUserCodesResult)
+        }
+    }
+
+    fun getCurrentUserRedeems(
+        limit: Int,
+        offset: Int,
+        from: Date,
+        to: Date,
+        callback: ResultCallback<CodeRedeems>,
+    ) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val currentUserRedeemsResult = codesInteractor.getCurrentUserRedeems(limit, offset, from, to)
+            callback.onResult(currentUserRedeemsResult)
         }
     }
 
