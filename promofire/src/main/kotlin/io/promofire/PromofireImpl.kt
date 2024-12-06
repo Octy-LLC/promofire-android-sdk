@@ -13,6 +13,7 @@ import io.promofire.models.Codes
 import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
+import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.ErrorCallback
 import io.promofire.utils.PromofireResult
@@ -167,6 +168,14 @@ internal class PromofireImpl {
             waitForConfiguration()
             val currentUserResult = customerInteractor.getCurrentUser()
             callback.onResult(currentUserResult)
+        }
+    }
+
+    fun updateCurrentUser(params: UpdateCustomerParams, callback: ResultCallback<Customer>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val updateCurrentUserResult = customerInteractor.updateCurrentUser(params)
+            callback.onResult(updateCurrentUserResult)
         }
     }
 

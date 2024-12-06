@@ -12,6 +12,7 @@ import io.promofire.models.Codes
 import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
+import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.ErrorCallback
 import io.promofire.utils.ResultCallback
@@ -98,6 +99,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.getCurrentUser(callback)
+    }
+
+    public fun updateCurrentUser(params: UpdateCustomerParams, callback: ResultCallback<Customer>) {
+        checkIsConfigured()
+
+        promofireImpl.updateCurrentUser(params, callback)
     }
 
     private fun checkIsConfigured() {
