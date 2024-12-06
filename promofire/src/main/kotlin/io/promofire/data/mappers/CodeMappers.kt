@@ -6,8 +6,8 @@ import io.promofire.data.network.api.codes.models.CreateCodeDto
 import io.promofire.data.network.api.codes.models.CreateCodesDto
 import io.promofire.models.Code
 import io.promofire.models.Codes
-import io.promofire.models.params.CreateCodeParams
-import io.promofire.models.params.CreateCodesParams
+import io.promofire.models.params.GenerateCodeParams
+import io.promofire.models.params.GenerateCodesParams
 
 internal fun CodesDto.toModel(): Codes = Codes(
     codes = codes.map(CodeDto::toModel),
@@ -26,13 +26,13 @@ internal fun CodeDto.toModel(): Code = Code(
     amount = amount,
 )
 
-internal fun CreateCodesParams.toDto(): CreateCodesDto = CreateCodesDto(
+internal fun GenerateCodesParams.toDto(): CreateCodesDto = CreateCodesDto(
     templateId = templateId,
     payload = payload.toJsonElement(),
     count = count,
 )
 
-internal fun CreateCodeParams.toDto(): CreateCodeDto = CreateCodeDto(
+internal fun GenerateCodeParams.toDto(): CreateCodeDto = CreateCodeDto(
     value = value,
     templateId = templateId,
     payload = payload.toJsonElement(),
