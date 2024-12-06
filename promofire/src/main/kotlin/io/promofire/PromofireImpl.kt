@@ -12,6 +12,7 @@ import io.promofire.models.Codes
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.DeviceSpecsProvider
+import io.promofire.utils.ErrorCallback
 import io.promofire.utils.PromofireResult
 import io.promofire.utils.ResultCallback
 import io.promofire.utils.promofireScope
@@ -142,6 +143,16 @@ internal class PromofireImpl {
             waitForConfiguration()
             val generateCodesResult = codesInteractor.generateCodes(params)
             callback.onResult(generateCodesResult)
+        }
+    }
+
+    fun redeemCode(codeValue: String, callback: ErrorCallback) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val redeemCodeResult = codesInteractor.redeemCode(codeValue)
+            if (redeemCodeResult is PromofireResult.Error) {
+                callback.onResult(redeemCodeResult.error)
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import io.promofire.models.Codes
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
+import io.promofire.utils.ErrorCallback
 import io.promofire.utils.ResultCallback
 import java.util.Date
 import kotlin.concurrent.Volatile
@@ -84,6 +85,12 @@ public object Promofire {
         checkIsConfigured()
 
         promofireImpl.generateCodes(params, callback)
+    }
+
+    public fun redeemCode(codeValue: String, callback: ErrorCallback) {
+        checkIsConfigured()
+
+        promofireImpl.redeemCode(codeValue, callback)
     }
 
     private fun checkIsConfigured() {
