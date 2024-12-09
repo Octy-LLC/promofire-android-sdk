@@ -8,7 +8,7 @@ public data class Code(
     val templateId: String,
     val createdAt: Date,
     val updatedAt: Date,
-    val expiresAt: Int,
+    val expiresAt: Long,
     val ownerId: String,
     val payload: String,
     val amount: String,

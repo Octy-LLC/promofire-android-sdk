@@ -15,7 +15,7 @@ internal data class CodeDto(
     val createdAt: Date,
     @Serializable(IsoDateSerializer::class)
     val updatedAt: Date,
-    val expiresAt: Int,
+    val expiresAt: Long,
     val ownerId: String,
     val payload: JsonElement,
     val amount: String,
