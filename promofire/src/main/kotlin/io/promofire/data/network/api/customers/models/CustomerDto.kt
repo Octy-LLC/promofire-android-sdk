@@ -8,7 +8,7 @@ import java.util.Date
 @Serializable
 internal data class CustomerDto(
     val id: String,
-    val tenantAssignedId: String?,
+    val customerUserId: String?,
     val country: String?,
     val platform: Platform,
     val device: String?,

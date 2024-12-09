@@ -4,7 +4,7 @@ import java.util.Date
 
 public data class Customer(
     val id: String,
-    val tenantAssignedId: String?,
+    val customerUserId: String?,
     val country: String?,
     val platform: Platform,
     val device: String?,

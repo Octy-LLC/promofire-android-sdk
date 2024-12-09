@@ -7,7 +7,7 @@ import io.promofire.models.params.UpdateCustomerParams
 
 internal fun CustomerDto.toModel(): Customer = Customer(
     id = id,
-    tenantAssignedId = tenantAssignedId,
+    customerUserId = customerUserId,
     country = country,
     platform = platform,
     device = device,

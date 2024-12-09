@@ -60,7 +60,7 @@ internal class PromofireConfigurator {
             appBuild = appBuild,
             appVersion = appVersion,
             sdkVersion = BuildConfig.VERSION_NAME,
-            tenantAssignedId = userInfo?.tenantId,
+            customerUserId = userInfo?.customerUserId,
             firstName = userInfo?.firstName,
             lastName = userInfo?.lastName,
             email = userInfo?.email,

@@ -11,7 +11,7 @@ internal data class CreateCustomerRequestDto(
     val appBuild: String,
     val appVersion: String,
     val sdkVersion: String,
-    val tenantAssignedId: String?,
+    val customerUserId: String?,
     val firstName: String?,
     val lastName: String?,
     val email: String?,
