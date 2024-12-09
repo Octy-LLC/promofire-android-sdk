@@ -3,11 +3,11 @@ package io.promofire.data.network.api.codes
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.promofire.data.network.api.codes.models.CodeDto
+import io.promofire.data.network.api.codes.models.CodeRedeemsDto
 import io.promofire.data.network.api.codes.models.CodesDto
 import io.promofire.data.network.api.codes.models.CreateCodeDto
 import io.promofire.data.network.api.codes.models.CreateCodesDto
 import io.promofire.data.network.api.codes.models.RedeemCodeRequestDto
-import io.promofire.data.network.api.codes.models.CodeRedeemsDto
 import io.promofire.data.network.core.EmptyNetworkResult
 import io.promofire.data.network.core.NetworkResult
 import io.promofire.data.network.core.safeGet
@@ -37,6 +37,7 @@ internal interface CodesApi {
         offset: Int,
         from: String,
         to: String,
+        codeValue: String?,
     ): NetworkResult<CodeRedeemsDto>
 }
 
@@ -82,10 +83,12 @@ internal class CodesApiImpl(
         offset: Int,
         from: String,
         to: String,
+        codeValue: String?,
     ): NetworkResult<CodeRedeemsDto> = httpClient.safeGet("codes/redeems/me") {
         parameter("limit", limit)
         parameter("offset", offset)
         parameter("from", from)
         parameter("to", to)
+        parameter("codeValue", codeValue)
     }
 }

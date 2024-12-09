@@ -26,8 +26,14 @@ internal class CodesInteractor {
         offset: Int,
         from: Date,
         to: Date,
-    ): PromofireResult<CodeRedeems> = codesApi.getMyRedeems(limit, offset, from.toIsoString(), to.toIsoString())
-        .mapToPromofireResult { it.toModel() }
+        codeValue: String?,
+    ): PromofireResult<CodeRedeems> = codesApi.getMyRedeems(
+        limit = limit,
+        offset = offset,
+        from = from.toIsoString(),
+        to = to.toIsoString(),
+        codeValue = codeValue
+    ).mapToPromofireResult { it.toModel() }
 
     suspend fun getCodeRedeems(
         limit: Int,

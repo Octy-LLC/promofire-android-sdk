@@ -112,11 +112,12 @@ internal class PromofireImpl {
         offset: Int,
         from: Date,
         to: Date,
+        codeValue: String?,
         callback: ResultCallback<CodeRedeems>,
     ) {
         promofireScope.launch {
             waitForConfiguration()
-            val currentUserRedeemsResult = codesInteractor.getCurrentUserRedeems(limit, offset, from, to)
+            val currentUserRedeemsResult = codesInteractor.getCurrentUserRedeems(limit, offset, from, to, codeValue)
             callback.onResult(currentUserRedeemsResult)
         }
     }

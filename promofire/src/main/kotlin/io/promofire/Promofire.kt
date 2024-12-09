@@ -58,11 +58,12 @@ public object Promofire {
         offset: Int,
         from: Date,
         to: Date,
+        codeValue: String? = null,
         callback: ResultCallback<CodeRedeems>,
     ) {
         checkIsConfigured()
 
-        promofireImpl.getCurrentUserRedeems(limit, offset, from, to, callback)
+        promofireImpl.getCurrentUserRedeems(limit, offset, from, to, codeValue, callback)
     }
 
     public fun getCampaigns(limit: Int, offset: Int, callback: ResultCallback<CodeTemplates>) {
