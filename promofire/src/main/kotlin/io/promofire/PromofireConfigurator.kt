@@ -10,14 +10,11 @@ import io.promofire.data.network.api.customersApi
 import io.promofire.data.network.core.isSuccess
 import io.promofire.logger.Logger
 import io.promofire.logger.e
+import io.promofire.models.Platform
 import io.promofire.models.UserInfo
 import io.promofire.utils.DeviceSpecsProvider
 
 internal class PromofireConfigurator {
-
-    companion object {
-        private const val PLATFORM_ANDROID = "ANDROID"
-    }
 
     suspend fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
         val sdkAuthRequest = SdkAuthRequestDto(config.projectName, config.secret)
@@ -29,7 +26,7 @@ internal class PromofireConfigurator {
         }
         TokensStorage.saveAccessToken(authResult.data.accessToken)
 
-        val createPresetRequest = CreatePresetRequestDto(PLATFORM_ANDROID)
+        val createPresetRequest = CreatePresetRequestDto(Platform.ANDROID)
         val customersResult = customersApi.createCustomerPreset(createPresetRequest)
         if (!customersResult.isSuccess()) {
             Promofire.isConfigured = false
@@ -57,7 +54,7 @@ internal class PromofireConfigurator {
         val deviceName = deviceSpecsProvider.deviceName
         val (appVersion, appBuild) = deviceSpecsProvider.appVersionAndCode
         return CreateCustomerRequestDto(
-            platform = PLATFORM_ANDROID,
+            platform = Platform.ANDROID,
             device = deviceName,
             os = deviceSpecsProvider.osVersion,
             appBuild = appBuild,

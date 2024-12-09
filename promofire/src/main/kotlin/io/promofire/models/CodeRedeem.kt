@@ -6,7 +6,7 @@ public data class CodeRedeem(
     val id: String,
     val redeemerId: String,
     val code: String,
-    val platform: String?,
+    val platform: Platform?,
     val country: String?,
     val templateId: String,
     val redeemedAt: Date,

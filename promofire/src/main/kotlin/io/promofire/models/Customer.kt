@@ -6,7 +6,7 @@ public data class Customer(
     val id: String,
     val tenantAssignedId: String?,
     val country: String?,
-    val platform: String,
+    val platform: Platform,
     val device: String?,
     val os: String?,
     val appBuild: String?,

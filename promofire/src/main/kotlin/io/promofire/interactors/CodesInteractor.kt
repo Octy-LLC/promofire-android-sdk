@@ -8,6 +8,7 @@ import io.promofire.data.network.core.mapToPromofireResult
 import io.promofire.models.Code
 import io.promofire.models.CodeRedeems
 import io.promofire.models.Codes
+import io.promofire.models.Platform
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.utils.PromofireResult
@@ -15,10 +16,6 @@ import io.promofire.utils.toIsoString
 import java.util.Date
 
 internal class CodesInteractor {
-
-    companion object {
-        private const val PLATFORM_ANDROID = "ANDROID"
-    }
 
     suspend fun getCurrentUserCodes(limit: Int, offset: Int): PromofireResult<Codes> {
         return codesApi.getMyCodes(limit, offset).mapToPromofireResult { it.toModel() }
@@ -57,7 +54,7 @@ internal class CodesInteractor {
     }
 
     suspend fun redeemCode(codeValue: String): PromofireResult<Unit> {
-        val redeemCodeRequest = RedeemCodeRequestDto(codeValue = codeValue, platform = PLATFORM_ANDROID)
+        val redeemCodeRequest = RedeemCodeRequestDto(codeValue = codeValue, platform = Platform.ANDROID)
         return codesApi.redeemCode(redeemCodeRequest).mapToPromofireResult()
     }
 }

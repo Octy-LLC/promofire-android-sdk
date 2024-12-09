@@ -1,6 +1,7 @@
 package io.promofire.data.network.api.customers.models
 
 import io.promofire.data.network.core.serializers.IsoDateSerializer
+import io.promofire.models.Platform
 import kotlinx.serialization.Serializable
 import java.util.Date
 
@@ -9,7 +10,7 @@ internal data class CustomerDto(
     val id: String,
     val tenantAssignedId: String?,
     val country: String?,
-    val platform: String,
+    val platform: Platform,
     val device: String?,
     val os: String?,
     val appBuild: String?,
