@@ -6,4 +6,4 @@ public fun interface Callback<T> {
 
 public fun interface ResultCallback<T> : Callback<PromofireResult<T>>
 
-public fun interface ErrorCallback : Callback<Throwable>
+public fun interface EmptyResultCallback : ResultCallback<Unit>

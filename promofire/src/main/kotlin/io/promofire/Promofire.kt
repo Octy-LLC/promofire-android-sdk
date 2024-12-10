@@ -14,7 +14,7 @@ import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
-import io.promofire.utils.ErrorCallback
+import io.promofire.utils.EmptyResultCallback
 import io.promofire.utils.ResultCallback
 import java.util.Date
 import kotlin.concurrent.Volatile
@@ -32,7 +32,7 @@ public object Promofire {
             Logger.isDebug = value
         }
 
-    public fun configure(context: Context, config: PromofireConfig, callback: ErrorCallback) {
+    public fun configure(context: Context, config: PromofireConfig, callback: EmptyResultCallback) {
         require(!isConfigured) { "Promofire is already configured" }
         require(context.applicationContext is Application) { "Application context is required" }
 
@@ -90,7 +90,7 @@ public object Promofire {
         promofireImpl.generateCodes(params, callback)
     }
 
-    public fun redeemCode(codeValue: String, callback: ErrorCallback) {
+    public fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
         checkIsConfigured()
 
         promofireImpl.redeemCode(codeValue, callback)

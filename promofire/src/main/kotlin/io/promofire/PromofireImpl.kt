@@ -17,7 +17,7 @@ import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.DeviceSpecsProvider
-import io.promofire.utils.ErrorCallback
+import io.promofire.utils.EmptyResultCallback
 import io.promofire.utils.PromofireResult
 import io.promofire.utils.ResultCallback
 import io.promofire.utils.promofireScope
@@ -77,17 +77,18 @@ internal class PromofireImpl {
         CustomerInteractor()
     }
 
-    fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider, callback: ErrorCallback) {
+    fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider, callback: EmptyResultCallback) {
         require(configurationJob == null) { "Promofire is already configured" }
         configurationJob = promofireScope.launch {
             val configurationResult = promofireConfigurator.configureSdk(config, deviceSpecsProvider)
             when (configurationResult) {
                 is PromofireResult.Success -> {
                     Promofire.isConfigured = true
+                    callback.onResult(configurationResult)
                 }
                 is PromofireResult.Error -> {
                     Promofire.isConfigured = false
-                    callback.onResult(configurationResult.error)
+                    callback.onResult(configurationResult)
                     Logger.e("Error during SDK configuration", configurationResult.error)
                 }
             }
@@ -166,13 +167,11 @@ internal class PromofireImpl {
         }
     }
 
-    fun redeemCode(codeValue: String, callback: ErrorCallback) {
+    fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
         promofireScope.launch {
             waitForConfiguration()
             val redeemCodeResult = codesInteractor.redeemCode(codeValue)
-            if (redeemCodeResult is PromofireResult.Error) {
-                callback.onResult(redeemCodeResult.error)
-            }
+            callback.onResult(redeemCodeResult)
         }
     }
 
