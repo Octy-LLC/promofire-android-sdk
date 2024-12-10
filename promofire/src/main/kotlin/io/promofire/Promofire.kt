@@ -32,13 +32,13 @@ public object Promofire {
             Logger.isDebug = value
         }
 
-    public fun configure(context: Context, config: PromofireConfig) {
+    public fun configure(context: Context, config: PromofireConfig, callback: ErrorCallback) {
         require(!isConfigured) { "Promofire is already configured" }
         require(context.applicationContext is Application) { "Application context is required" }
 
         isConfigured = true
         val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
-        promofireImpl.configureSdk(config, deviceSpecsProvider)
+        promofireImpl.configureSdk(config, deviceSpecsProvider, callback)
     }
 
     public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {

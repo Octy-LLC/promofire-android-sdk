@@ -5,6 +5,8 @@ import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
 import io.promofire.interactors.CustomerInteractor
+import io.promofire.logger.Logger
+import io.promofire.logger.e
 import io.promofire.models.Code
 import io.promofire.models.CodeRedeems
 import io.promofire.models.CodeTemplate
@@ -75,10 +77,20 @@ internal class PromofireImpl {
         CustomerInteractor()
     }
 
-    fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
+    fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider, callback: ErrorCallback) {
         require(configurationJob == null) { "Promofire is already configured" }
         configurationJob = promofireScope.launch {
-            promofireConfigurator.configureSdk(config, deviceSpecsProvider)
+            val configurationResult = promofireConfigurator.configureSdk(config, deviceSpecsProvider)
+            when (configurationResult) {
+                is PromofireResult.Success -> {
+                    Promofire.isConfigured = true
+                }
+                is PromofireResult.Error -> {
+                    Promofire.isConfigured = false
+                    callback.onResult(configurationResult.error)
+                    Logger.e("Error during SDK configuration", configurationResult.error)
+                }
+            }
             configurationJob = null
             isCodeGenerationAvailable { /* Ignore */ }
         }

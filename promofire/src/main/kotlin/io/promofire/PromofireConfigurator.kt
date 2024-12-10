@@ -8,43 +8,37 @@ import io.promofire.data.network.api.customers.models.CreateCustomerRequestDto
 import io.promofire.data.network.api.customers.models.CreatePresetRequestDto
 import io.promofire.data.network.api.customersApi
 import io.promofire.data.network.core.isSuccess
-import io.promofire.logger.Logger
-import io.promofire.logger.e
+import io.promofire.data.network.core.mapToPromofireResult
 import io.promofire.models.Platform
 import io.promofire.models.UserInfo
 import io.promofire.utils.DeviceSpecsProvider
+import io.promofire.utils.PromofireResult
 
 internal class PromofireConfigurator {
 
-    suspend fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider) {
+    suspend fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider): PromofireResult<Unit> {
         val sdkAuthRequest = SdkAuthRequestDto(config.projectName, config.secret)
         val authResult = authApi.signInWithSdk(sdkAuthRequest)
         if (!authResult.isSuccess()) {
-            Promofire.isConfigured = false
-            Logger.e("Error during SDK configuration", authResult.throwable)
-            return
+            return authResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(authResult.data.accessToken)
 
         val createPresetRequest = CreatePresetRequestDto(Platform.ANDROID)
         val customersResult = customersApi.createCustomerPreset(createPresetRequest)
         if (!customersResult.isSuccess()) {
-            Promofire.isConfigured = false
-            Logger.e("Error during SDK configuration", customersResult.throwable)
-            return
+            return customersResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(customersResult.data.accessToken)
 
         val createCustomerRequest = createCustomerRequest(config.userInfo, deviceSpecsProvider)
         val createCustomerResult = customersApi.upsertCustomer(createCustomerRequest)
         if (!createCustomerResult.isSuccess()) {
-            Promofire.isConfigured = false
-            Logger.e("Error during SDK configuration", createCustomerResult.throwable)
-            return
+            return createCustomerResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(createCustomerResult.data.accessToken)
 
-        Promofire.isConfigured = true
+        return PromofireResult.Success(Unit)
     }
 
     private fun createCustomerRequest(
