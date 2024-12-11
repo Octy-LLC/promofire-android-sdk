@@ -16,4 +16,8 @@ internal object TokensStorage {
     suspend fun saveAccessToken(accessToken: String) {
         storage?.saveString(KEY_ACCESS_TOKEN, accessToken)
     }
+
+    suspend fun clear() {
+        storage?.remove(KEY_ACCESS_TOKEN)
+    }
 }

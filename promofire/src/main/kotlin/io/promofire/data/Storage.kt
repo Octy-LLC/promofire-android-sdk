@@ -6,5 +6,7 @@ internal interface Storage {
 
     suspend fun saveString(key: String, value: String?)
 
+    suspend fun remove(key: String)
+
     suspend fun clear()
 }

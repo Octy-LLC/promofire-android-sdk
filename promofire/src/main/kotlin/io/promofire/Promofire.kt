@@ -124,6 +124,12 @@ public object Promofire {
         promofireImpl.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId, callback)
     }
 
+    public fun logout(callback: EmptyResultCallback) {
+        checkIsConfigured()
+
+        promofireImpl.logout(callback)
+    }
+
     private fun checkIsConfigured() {
         require(isConfigured) { "Promofire is not configured" }
     }

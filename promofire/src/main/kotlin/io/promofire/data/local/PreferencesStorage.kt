@@ -29,6 +29,10 @@ internal class PreferencesStorage(
         editor.putString(key, value).commit()
     }
 
+    override suspend fun remove(key: String): Unit = withContext(ioDispatcher) {
+        editor.remove(key).commit()
+    }
+
     override suspend fun clear(): Unit = withContext(ioDispatcher) {
         editor.clear().commit()
     }

@@ -217,6 +217,14 @@ internal class PromofireImpl {
         }
     }
 
+    fun logout(callback: EmptyResultCallback) {
+        promofireScope.launch {
+            configurationJob?.cancel()
+            TokensStorage.clear()
+            callback.onResult(PromofireResult.Success(Unit))
+        }
+    }
+
     private fun initStorage(storage: Storage) {
         try {
             lock.writeLock().lock()
