@@ -1,6 +1,8 @@
 package io.promofire
 
 import io.promofire.config.PromofireConfig
+import io.promofire.data.Storage
+import io.promofire.data.TokensStorage
 import io.promofire.interactors.CodeGenerationInteractor
 import io.promofire.interactors.CodeTemplatesInteractor
 import io.promofire.interactors.CodesInteractor
@@ -30,6 +32,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 internal class PromofireImpl {
 
     private val lock: ReadWriteLock = ReentrantReadWriteLock()
+
+    private var storage: Storage? = null
 
     private val promofireConfigurator = PromofireConfigurator()
 
@@ -77,8 +81,14 @@ internal class PromofireImpl {
         CustomerInteractor()
     }
 
-    fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider, callback: EmptyResultCallback) {
+    fun configureSdk(
+        config: PromofireConfig,
+        storage: Storage,
+        deviceSpecsProvider: DeviceSpecsProvider,
+        callback: EmptyResultCallback,
+    ) {
         require(configurationJob == null) { "Promofire is already configured" }
+        initStorage(storage)
         configurationJob = promofireScope.launch {
             val configurationResult = promofireConfigurator.configureSdk(config, deviceSpecsProvider)
             when (configurationResult) {
@@ -204,6 +214,18 @@ internal class PromofireImpl {
             waitForConfiguration()
             val codeRedeemsResult = codesInteractor.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId)
             callback.onResult(codeRedeemsResult)
+        }
+    }
+
+    private fun initStorage(storage: Storage) {
+        try {
+            lock.writeLock().lock()
+            if (this.storage == null) {
+                this.storage = storage
+                TokensStorage.init(storage)
+            }
+        } finally {
+            lock.writeLock().unlock()
         }
     }
 

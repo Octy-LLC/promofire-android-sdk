@@ -3,6 +3,7 @@ package io.promofire
 import android.app.Application
 import android.content.Context
 import io.promofire.config.PromofireConfig
+import io.promofire.data.local.PreferencesStorage
 import io.promofire.logger.Logger
 import io.promofire.models.Code
 import io.promofire.models.CodeRedeems
@@ -37,8 +38,9 @@ public object Promofire {
         require(context.applicationContext is Application) { "Application context is required" }
 
         isConfigured = true
+        val storage = PreferencesStorage(context.applicationContext)
         val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
-        promofireImpl.configureSdk(config, deviceSpecsProvider, callback)
+        promofireImpl.configureSdk(config, storage, deviceSpecsProvider, callback)
     }
 
     public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {

@@ -2,10 +2,18 @@ package io.promofire.data
 
 internal object TokensStorage {
 
-    var accessToken: String? = null
-        private set
+    private const val KEY_ACCESS_TOKEN = "key_access_token"
 
-    fun saveAccessToken(accessToken: String) {
-        TokensStorage.accessToken = accessToken
+    private var storage: Storage? = null
+
+    val accessToken: String?
+        get() = storage?.getString(KEY_ACCESS_TOKEN)
+
+    fun init(storage: Storage) {
+        this.storage = storage
+    }
+
+    suspend fun saveAccessToken(accessToken: String) {
+        storage?.saveString(KEY_ACCESS_TOKEN, accessToken)
     }
 }
