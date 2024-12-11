@@ -34,7 +34,6 @@ public object Promofire {
         }
 
     public fun configure(context: Context, config: PromofireConfig, callback: EmptyResultCallback) {
-        require(!isConfigured) { "Promofire is already configured" }
         require(context.applicationContext is Application) { "Application context is required" }
 
         isConfigured = true
@@ -44,14 +43,10 @@ public object Promofire {
     }
 
     public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
-        checkIsConfigured()
-
         promofireImpl.isCodeGenerationAvailable(callback)
     }
 
     public fun getCurrentUserCodes(limit: Int, offset: Int, callback: ResultCallback<Codes>) {
-        checkIsConfigured()
-
         promofireImpl.getCurrentUserCodes(limit, offset, callback)
     }
 
@@ -63,50 +58,34 @@ public object Promofire {
         codeValue: String? = null,
         callback: ResultCallback<CodeRedeems>,
     ) {
-        checkIsConfigured()
-
         promofireImpl.getCurrentUserRedeems(limit, offset, from, to, codeValue, callback)
     }
 
     public fun getCampaigns(limit: Int, offset: Int, callback: ResultCallback<CodeTemplates>) {
-        checkIsConfigured()
-
         promofireImpl.getCampaigns(limit, offset, callback)
     }
 
     public fun getCampaignBy(id: String, callback: ResultCallback<CodeTemplate>) {
-        checkIsConfigured()
-
         promofireImpl.getCampaignBy(id, callback)
     }
 
     public fun generateCode(params: GenerateCodeParams, callback: ResultCallback<Code>) {
-        checkIsConfigured()
-
         promofireImpl.generateCode(params, callback)
     }
 
     public fun generateCodes(params: GenerateCodesParams, callback: ResultCallback<List<Code>>) {
-        checkIsConfigured()
-
         promofireImpl.generateCodes(params, callback)
     }
 
     public fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
-        checkIsConfigured()
-
         promofireImpl.redeemCode(codeValue, callback)
     }
 
     public fun getCurrentUser(callback: ResultCallback<Customer>) {
-        checkIsConfigured()
-
         promofireImpl.getCurrentUser(callback)
     }
 
     public fun updateCurrentUser(params: UpdateCustomerParams, callback: ResultCallback<Customer>) {
-        checkIsConfigured()
-
         promofireImpl.updateCurrentUser(params, callback)
     }
 
@@ -119,18 +98,10 @@ public object Promofire {
         redeemerId: String? = null,
         callback: ResultCallback<CodeRedeems>,
     ) {
-        checkIsConfigured()
-
         promofireImpl.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId, callback)
     }
 
     public fun logout(callback: EmptyResultCallback) {
-        checkIsConfigured()
-
         promofireImpl.logout(callback)
-    }
-
-    private fun checkIsConfigured() {
-        require(isConfigured) { "Promofire is not configured" }
     }
 }

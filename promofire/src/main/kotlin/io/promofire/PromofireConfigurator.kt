@@ -11,15 +11,60 @@ import io.promofire.data.network.core.isSuccess
 import io.promofire.data.network.core.mapToPromofireResult
 import io.promofire.models.Platform
 import io.promofire.models.UserInfo
+import io.promofire.models.exceptions.PromofireConfigurationCancelException
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.PromofireResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 internal class PromofireConfigurator {
 
-    suspend fun configureSdk(config: PromofireConfig, deviceSpecsProvider: DeviceSpecsProvider): PromofireResult<Unit> {
+    private val mutex = Mutex()
+
+    private var configurationRequest: Deferred<PromofireResult<Unit>>? = null
+
+    suspend fun configurationJob(): Job? = mutex.withLock { configurationRequest }
+
+    suspend fun configureSdk(
+        config: PromofireConfig,
+        deviceSpecsProvider: DeviceSpecsProvider,
+    ): PromofireResult<Unit> = coroutineScope {
+        val configurationDeferred = mutex.withLock {
+            configurationRequest ?: configureSdkAsync(config, deviceSpecsProvider).also { configurationRequest = it }
+        }
+        try {
+            configurationDeferred.await()
+        } catch (e: CancellationException) {
+            TokensStorage.clear()
+            PromofireResult.Error(PromofireConfigurationCancelException())
+        } finally {
+            mutex.withLock { configurationRequest = null }
+        }
+    }
+
+    private fun CoroutineScope.configureSdkAsync(
+        config: PromofireConfig,
+        deviceSpecsProvider: DeviceSpecsProvider,
+    ): Deferred<PromofireResult<Unit>> = async { configurePromofireSdk(config, deviceSpecsProvider) }
+
+    private suspend fun configurePromofireSdk(
+        config: PromofireConfig,
+        deviceSpecsProvider: DeviceSpecsProvider,
+    ): PromofireResult<Unit> {
+        if (TokensStorage.accessToken != null) {
+            return PromofireResult.Success(Unit)
+        }
+
         val sdkAuthRequest = SdkAuthRequestDto(config.projectName, config.secret)
         val authResult = authApi.signInWithSdk(sdkAuthRequest)
         if (!authResult.isSuccess()) {
+            TokensStorage.clear()
             return authResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(authResult.data.accessToken)
@@ -27,6 +72,7 @@ internal class PromofireConfigurator {
         val createPresetRequest = CreatePresetRequestDto(Platform.ANDROID)
         val customersResult = customersApi.createCustomerPreset(createPresetRequest)
         if (!customersResult.isSuccess()) {
+            TokensStorage.clear()
             return customersResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(customersResult.data.accessToken)
@@ -34,6 +80,7 @@ internal class PromofireConfigurator {
         val createCustomerRequest = createCustomerRequest(config.userInfo, deviceSpecsProvider)
         val createCustomerResult = customersApi.upsertCustomer(createCustomerRequest)
         if (!createCustomerResult.isSuccess()) {
+            TokensStorage.clear()
             return createCustomerResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(createCustomerResult.data.accessToken)

@@ -23,7 +23,7 @@ import io.promofire.utils.EmptyResultCallback
 import io.promofire.utils.PromofireResult
 import io.promofire.utils.ResultCallback
 import io.promofire.utils.promofireScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.concurrent.locks.ReadWriteLock
@@ -36,20 +36,6 @@ internal class PromofireImpl {
     private var storage: Storage? = null
 
     private val promofireConfigurator = PromofireConfigurator()
-
-    private var configurationJob: Job? = null
-        get() = try {
-            lock.readLock().lock()
-            field
-        } finally {
-            lock.readLock().unlock()
-        }
-        set(value) = try {
-            lock.writeLock().lock()
-            field = value
-        } finally {
-            lock.writeLock().unlock()
-        }
 
     private var isCodeGenerationAvailable: Boolean = false
         get() = try {
@@ -87,14 +73,14 @@ internal class PromofireImpl {
         deviceSpecsProvider: DeviceSpecsProvider,
         callback: EmptyResultCallback,
     ) {
-        require(configurationJob == null) { "Promofire is already configured" }
         initStorage(storage)
-        configurationJob = promofireScope.launch {
+        promofireScope.launch {
             val configurationResult = promofireConfigurator.configureSdk(config, deviceSpecsProvider)
             when (configurationResult) {
                 is PromofireResult.Success -> {
                     Promofire.isConfigured = true
                     callback.onResult(configurationResult)
+                    isCodeGenerationAvailable { /* Ignore */ }
                 }
                 is PromofireResult.Error -> {
                     Promofire.isConfigured = false
@@ -102,8 +88,6 @@ internal class PromofireImpl {
                     Logger.e("Error during SDK configuration", configurationResult.error)
                 }
             }
-            configurationJob = null
-            isCodeGenerationAvailable { /* Ignore */ }
         }
     }
 
@@ -219,8 +203,9 @@ internal class PromofireImpl {
 
     fun logout(callback: EmptyResultCallback) {
         promofireScope.launch {
-            configurationJob?.cancel()
+            promofireConfigurator.configurationJob()?.cancelAndJoin()
             TokensStorage.clear()
+            Promofire.isConfigured = false
             callback.onResult(PromofireResult.Success(Unit))
         }
     }
@@ -238,6 +223,6 @@ internal class PromofireImpl {
     }
 
     private suspend fun waitForConfiguration() {
-        if (!Promofire.isConfigured) configurationJob?.join()
+        if (!Promofire.isConfigured) promofireConfigurator.configurationJob()?.join()
     }
 }
