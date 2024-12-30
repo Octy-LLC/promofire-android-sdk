@@ -12,7 +12,7 @@ internal class PreferencesStorage(
 ) : Storage {
 
     companion object {
-        private const val PREFS_NAME = "promofire_storage"
+        private const val PREFS_NAME = "promofire_storage.xml"
     }
 
     private val preferences by lazy {
