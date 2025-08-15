@@ -2,15 +2,11 @@ package io.promofire
 
 import io.promofire.config.PromofireConfig
 import io.promofire.data.TokensStorage
-import io.promofire.data.network.api.auth.requests.SdkAuthRequestDto
+import io.promofire.data.network.api.auth.requests.SdkCustomerAuthRequestDto
 import io.promofire.data.network.api.authApi
-import io.promofire.data.network.api.customers.models.CreateCustomerRequestDto
-import io.promofire.data.network.api.customers.models.CreatePresetRequestDto
-import io.promofire.data.network.api.customersApi
 import io.promofire.data.network.core.isSuccess
 import io.promofire.data.network.core.mapToPromofireResult
 import io.promofire.models.Platform
-import io.promofire.models.UserInfo
 import io.promofire.models.exceptions.PromofireConfigurationCancelException
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.PromofireResult
@@ -61,40 +57,25 @@ internal class PromofireConfigurator {
             return PromofireResult.Success(Unit)
         }
 
-        val sdkAuthRequest = SdkAuthRequestDto(config.projectName, config.secret)
-        val authResult = authApi.signInWithSdk(sdkAuthRequest)
+        val sdkCustomerAuthRequest = createSdkCustomerAuthRequest(config, deviceSpecsProvider)
+        val authResult = authApi.signInWithSdk(sdkCustomerAuthRequest)
         if (!authResult.isSuccess()) {
             TokensStorage.clear()
             return authResult.mapToPromofireResult()
         }
         TokensStorage.saveAccessToken(authResult.data.accessToken)
 
-        val createPresetRequest = CreatePresetRequestDto(Platform.ANDROID)
-        val customersResult = customersApi.createCustomerPreset(createPresetRequest)
-        if (!customersResult.isSuccess()) {
-            TokensStorage.clear()
-            return customersResult.mapToPromofireResult()
-        }
-        TokensStorage.saveAccessToken(customersResult.data.accessToken)
-
-        val createCustomerRequest = createCustomerRequest(config.userInfo, deviceSpecsProvider)
-        val createCustomerResult = customersApi.upsertCustomer(createCustomerRequest)
-        if (!createCustomerResult.isSuccess()) {
-            TokensStorage.clear()
-            return createCustomerResult.mapToPromofireResult()
-        }
-        TokensStorage.saveAccessToken(createCustomerResult.data.accessToken)
-
         return PromofireResult.Success(Unit)
     }
 
-    private fun createCustomerRequest(
-        userInfo: UserInfo?,
+    private fun createSdkCustomerAuthRequest(
+        config: PromofireConfig,
         deviceSpecsProvider: DeviceSpecsProvider,
-    ): CreateCustomerRequestDto {
+    ): SdkCustomerAuthRequestDto {
+        val userInfo = config.userInfo
         val deviceName = deviceSpecsProvider.deviceName
         val (appVersion, appBuild) = deviceSpecsProvider.appVersionAndCode
-        return CreateCustomerRequestDto(
+        return SdkCustomerAuthRequestDto(
             platform = Platform.ANDROID,
             device = deviceName,
             os = deviceSpecsProvider.osVersion,
@@ -106,6 +87,7 @@ internal class PromofireConfigurator {
             lastName = userInfo?.lastName,
             email = userInfo?.email,
             phone = userInfo?.phone,
+            secret = config.secret,
         )
     }
 }
