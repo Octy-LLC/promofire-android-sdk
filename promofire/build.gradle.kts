@@ -22,7 +22,7 @@ android {
         buildConfigField(
             "String",
             "VERSION_NAME",
-            "\"0.0.1\""
+            "\"0.2.0\""
         )
     }
 
