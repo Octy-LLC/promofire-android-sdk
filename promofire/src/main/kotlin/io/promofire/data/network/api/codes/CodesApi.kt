@@ -21,6 +21,8 @@ internal interface CodesApi {
 
     suspend fun getMyCodes(limit: Int, offset: Int = 0): NetworkResult<CodesDto>
 
+    suspend fun getCodeByValue(codeValue: String): NetworkResult<CodeDto>
+
     suspend fun redeemCode(request: RedeemCodeRequestDto): EmptyNetworkResult
 
     suspend fun getRedeems(
@@ -57,6 +59,10 @@ internal class CodesApiImpl(
         limit: Int,
         offset: Int,
     ): NetworkResult<CodesDto> = httpClient.safeGet("codes/me?limit=$limit&offset=$offset")
+
+    override suspend fun getCodeByValue(
+        codeValue: String,
+    ): NetworkResult<CodeDto> = httpClient.safeGet("codes/$codeValue")
 
     override suspend fun redeemCode(
         request: RedeemCodeRequestDto,

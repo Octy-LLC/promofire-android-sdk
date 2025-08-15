@@ -114,6 +114,14 @@ internal class PromofireImpl {
         }
     }
 
+    fun getCodeByValue(codeValue: String, callback: ResultCallback<Code>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val codeResult = codesInteractor.getCodeByValue(codeValue)
+            callback.onResult(codeResult)
+        }
+    }
+
     fun getCurrentUserRedeems(
         limit: Int,
         offset: Int,

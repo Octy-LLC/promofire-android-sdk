@@ -50,6 +50,10 @@ public object Promofire {
         promofireImpl.getCurrentUserCodes(limit, offset, callback)
     }
 
+    public fun getCodeByValue(codeValue: String, callback: ResultCallback<Code>) {
+        promofireImpl.getCodeByValue(codeValue, callback)
+    }
+
     public fun getCurrentUserRedeems(
         limit: Int,
         offset: Int,

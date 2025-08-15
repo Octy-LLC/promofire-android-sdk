@@ -21,6 +21,10 @@ internal class CodesInteractor {
         return codesApi.getMyCodes(limit, offset).mapToPromofireResult { it.toModel() }
     }
 
+    suspend fun getCodeByValue(codeValue: String): PromofireResult<Code> {
+        return codesApi.getCodeByValue(codeValue).mapToPromofireResult { it.toModel() }
+    }
+
     suspend fun getCurrentUserRedeems(
         limit: Int,
         offset: Int,
