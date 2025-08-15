@@ -13,6 +13,7 @@ import io.promofire.models.Codes
 import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
+import io.promofire.models.params.UpdateCodeParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.EmptyResultCallback
@@ -79,6 +80,10 @@ public object Promofire {
 
     public fun generateCodes(params: GenerateCodesParams, callback: ResultCallback<List<Code>>) {
         promofireImpl.generateCodes(params, callback)
+    }
+
+    public fun updateCode(codeValue: String, params: UpdateCodeParams, callback: ResultCallback<Code>) {
+        promofireImpl.updateCode(codeValue, params, callback)
     }
 
     public fun redeemCode(codeValue: String, callback: EmptyResultCallback) {

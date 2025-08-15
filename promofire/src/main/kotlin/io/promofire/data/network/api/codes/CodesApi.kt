@@ -8,9 +8,11 @@ import io.promofire.data.network.api.codes.models.CodesDto
 import io.promofire.data.network.api.codes.models.CreateCodeDto
 import io.promofire.data.network.api.codes.models.CreateCodesDto
 import io.promofire.data.network.api.codes.models.RedeemCodeRequestDto
+import io.promofire.data.network.api.codes.models.UpdateCodeDto
 import io.promofire.data.network.core.EmptyNetworkResult
 import io.promofire.data.network.core.NetworkResult
 import io.promofire.data.network.core.safeGet
+import io.promofire.data.network.core.safePatch
 import io.promofire.data.network.core.safePost
 
 internal interface CodesApi {
@@ -18,6 +20,8 @@ internal interface CodesApi {
     suspend fun createCode(request: CreateCodeDto): NetworkResult<CodeDto>
 
     suspend fun createCodes(request: CreateCodesDto): NetworkResult<List<CodeDto>>
+
+    suspend fun updateCode(codeValue: String, request: UpdateCodeDto): NetworkResult<CodeDto>
 
     suspend fun getMyCodes(limit: Int, offset: Int = 0): NetworkResult<CodesDto>
 
@@ -54,6 +58,11 @@ internal class CodesApiImpl(
     override suspend fun createCodes(
         request: CreateCodesDto,
     ): NetworkResult<List<CodeDto>> = httpClient.safePost("codes/batch", request)
+
+    override suspend fun updateCode(
+        codeValue: String,
+        request: UpdateCodeDto,
+    ): NetworkResult<CodeDto> = httpClient.safePatch("codes/$codeValue", request)
 
     override suspend fun getMyCodes(
         limit: Int,

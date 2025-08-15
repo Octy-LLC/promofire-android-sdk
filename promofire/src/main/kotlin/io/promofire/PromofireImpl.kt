@@ -17,6 +17,7 @@ import io.promofire.models.Codes
 import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
+import io.promofire.models.params.UpdateCodeParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.EmptyResultCallback
@@ -166,6 +167,14 @@ internal class PromofireImpl {
             waitForConfiguration()
             val generateCodesResult = codesInteractor.generateCodes(params)
             callback.onResult(generateCodesResult)
+        }
+    }
+
+    fun updateCode(codeValue: String, params: UpdateCodeParams, callback: ResultCallback<Code>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val updateCodeResult = codesInteractor.updateCode(codeValue, params)
+            callback.onResult(updateCodeResult)
         }
     }
 
