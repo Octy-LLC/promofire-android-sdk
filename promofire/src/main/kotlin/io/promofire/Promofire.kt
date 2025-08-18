@@ -17,16 +17,20 @@ import io.promofire.models.params.UpdateCodeParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.AndroidDeviceSpecsProvider
 import io.promofire.utils.EmptyResultCallback
+import io.promofire.utils.PromofireResult
 import io.promofire.utils.ResultCallback
 import java.util.Date
 import kotlin.concurrent.Volatile
 
 public object Promofire {
 
-    private val promofireImpl = PromofireImpl()
+    private var _promofireImpl: PromofireImpl? = null
+    private val promofireImpl: PromofireImpl
+        get() = _promofireImpl!!
 
     @Volatile
-    internal var isConfigured: Boolean = false
+    public var isInitialized: Boolean = false
+        private set
 
     public var isDebug: Boolean
         get() = Logger.isDebug
@@ -34,24 +38,47 @@ public object Promofire {
             Logger.isDebug = value
         }
 
-    public fun configure(context: Context, config: PromofireConfig, callback: EmptyResultCallback) {
+    private val notInitializedError = PromofireResult.Error(
+        error = IllegalStateException("Promofire was not initialized")
+    )
+
+    @Synchronized
+    public fun initialize(context: Context) {
         require(context.applicationContext is Application) { "Application context is required" }
 
-        isConfigured = true
-        val storage = PreferencesStorage(context.applicationContext)
-        val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
-        promofireImpl.configureSdk(config, storage, deviceSpecsProvider, callback)
+        synchronized(this) {
+            if (isInitialized) {
+                return
+            }
+
+            val storage = PreferencesStorage(context.applicationContext)
+            val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
+            _promofireImpl = PromofireImpl(storage, deviceSpecsProvider)
+            isInitialized = true
+        }
+    }
+
+    public fun activate(config: PromofireConfig, callback: EmptyResultCallback) {
+        if (!checkInitialized(callback)) return
+
+        promofireImpl.configureSdk(config, callback)
     }
 
     public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.isCodeGenerationAvailable(callback)
     }
 
     public fun getCurrentUserCodes(limit: Int, offset: Int, callback: ResultCallback<Codes>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCurrentUserCodes(limit, offset, callback)
     }
 
     public fun getCodeByValue(codeValue: String, callback: ResultCallback<Code>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCodeByValue(codeValue, callback)
     }
 
@@ -63,38 +90,56 @@ public object Promofire {
         codeValue: String? = null,
         callback: ResultCallback<CodeRedeems>,
     ) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCurrentUserRedeems(limit, offset, from, to, codeValue, callback)
     }
 
     public fun getCampaigns(limit: Int, offset: Int, callback: ResultCallback<CodeTemplates>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCampaigns(limit, offset, callback)
     }
 
     public fun getCampaignBy(id: String, callback: ResultCallback<CodeTemplate>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCampaignBy(id, callback)
     }
 
     public fun generateCode(params: GenerateCodeParams, callback: ResultCallback<Code>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.generateCode(params, callback)
     }
 
     public fun generateCodes(params: GenerateCodesParams, callback: ResultCallback<List<Code>>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.generateCodes(params, callback)
     }
 
     public fun updateCode(codeValue: String, params: UpdateCodeParams, callback: ResultCallback<Code>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.updateCode(codeValue, params, callback)
     }
 
     public fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.redeemCode(codeValue, callback)
     }
 
     public fun getCurrentUser(callback: ResultCallback<Customer>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCurrentUser(callback)
     }
 
     public fun updateCurrentUser(params: UpdateCustomerParams, callback: ResultCallback<Customer>) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.updateCurrentUser(params, callback)
     }
 
@@ -107,10 +152,22 @@ public object Promofire {
         redeemerId: String? = null,
         callback: ResultCallback<CodeRedeems>,
     ) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId, callback)
     }
 
     public fun logout(callback: EmptyResultCallback) {
+        if (checkInitialized(callback)) return
+
         promofireImpl.logout(callback)
+    }
+
+    private fun checkInitialized(callback: ResultCallback<*>): Boolean {
+        if (!isInitialized) {
+            callback.onResult(notInitializedError)
+            return false
+        }
+        return true
     }
 }
