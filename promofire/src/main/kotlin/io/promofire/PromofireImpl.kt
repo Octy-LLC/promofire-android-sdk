@@ -17,6 +17,7 @@ import io.promofire.models.Codes
 import io.promofire.models.Customer
 import io.promofire.models.params.GenerateCodeParams
 import io.promofire.models.params.GenerateCodesParams
+import io.promofire.models.params.UpdateCodeParams
 import io.promofire.models.params.UpdateCustomerParams
 import io.promofire.utils.DeviceSpecsProvider
 import io.promofire.utils.EmptyResultCallback
@@ -26,30 +27,16 @@ import io.promofire.utils.promofireScope
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import java.util.Date
-import java.util.concurrent.locks.ReadWriteLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.atomic.AtomicBoolean
 
-internal class PromofireImpl {
-
-    private val lock: ReadWriteLock = ReentrantReadWriteLock()
-
-    private var storage: Storage? = null
+internal class PromofireImpl(
+    storage: Storage,
+    private val deviceSpecsProvider: DeviceSpecsProvider,
+) {
 
     private val promofireConfigurator = PromofireConfigurator()
 
-    private var isCodeGenerationAvailable: Boolean = false
-        get() = try {
-            lock.readLock().lock()
-            field
-        } finally {
-            lock.readLock().unlock()
-        }
-        set(value) = try {
-            lock.writeLock().lock()
-            field = value
-        } finally {
-            lock.writeLock().unlock()
-        }
+    private var isCodeGenerationAvailable = AtomicBoolean(false)
 
     private val codeGenerationInteractor by lazy {
         CodeGenerationInteractor()
@@ -67,23 +54,22 @@ internal class PromofireImpl {
         CustomerInteractor()
     }
 
+    init {
+        TokensStorage.init(storage)
+    }
+
     fun configureSdk(
         config: PromofireConfig,
-        storage: Storage,
-        deviceSpecsProvider: DeviceSpecsProvider,
         callback: EmptyResultCallback,
     ) {
-        initStorage(storage)
         promofireScope.launch {
             val configurationResult = promofireConfigurator.configureSdk(config, deviceSpecsProvider)
             when (configurationResult) {
                 is PromofireResult.Success -> {
-                    Promofire.isConfigured = true
                     callback.onResult(configurationResult)
                     isCodeGenerationAvailable { /* Ignore */ }
                 }
                 is PromofireResult.Error -> {
-                    Promofire.isConfigured = false
                     callback.onResult(configurationResult)
                     Logger.e("Error during SDK configuration", configurationResult.error)
                 }
@@ -92,7 +78,7 @@ internal class PromofireImpl {
     }
 
     fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
-        if (isCodeGenerationAvailable) {
+        if (isCodeGenerationAvailable.get()) {
             callback.onResult(PromofireResult.Success(true))
             return
         }
@@ -100,7 +86,7 @@ internal class PromofireImpl {
             waitForConfiguration()
             val isCodeGenerationAvailableResult = codeGenerationInteractor.isCodeGenerationAvailable()
             if (isCodeGenerationAvailableResult is PromofireResult.Success) {
-                isCodeGenerationAvailable = isCodeGenerationAvailableResult.value
+                isCodeGenerationAvailable.set(isCodeGenerationAvailableResult.value)
             }
             callback.onResult(isCodeGenerationAvailableResult)
         }
@@ -111,6 +97,14 @@ internal class PromofireImpl {
             waitForConfiguration()
             val currentUserCodesResult = codesInteractor.getCurrentUserCodes(limit, offset)
             callback.onResult(currentUserCodesResult)
+        }
+    }
+
+    fun getCodeByValue(codeValue: String, callback: ResultCallback<Code>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val codeResult = codesInteractor.getCodeByValue(codeValue)
+            callback.onResult(codeResult)
         }
     }
 
@@ -161,6 +155,14 @@ internal class PromofireImpl {
         }
     }
 
+    fun updateCode(codeValue: String, params: UpdateCodeParams, callback: ResultCallback<Code>) {
+        promofireScope.launch {
+            waitForConfiguration()
+            val updateCodeResult = codesInteractor.updateCode(codeValue, params)
+            callback.onResult(updateCodeResult)
+        }
+    }
+
     fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
         promofireScope.launch {
             waitForConfiguration()
@@ -205,24 +207,12 @@ internal class PromofireImpl {
         promofireScope.launch {
             promofireConfigurator.configurationJob()?.cancelAndJoin()
             TokensStorage.clear()
-            Promofire.isConfigured = false
+            isCodeGenerationAvailable.set(false)
             callback.onResult(PromofireResult.Success(Unit))
         }
     }
 
-    private fun initStorage(storage: Storage) {
-        try {
-            lock.writeLock().lock()
-            if (this.storage == null) {
-                this.storage = storage
-                TokensStorage.init(storage)
-            }
-        } finally {
-            lock.writeLock().unlock()
-        }
-    }
-
     private suspend fun waitForConfiguration() {
-        if (!Promofire.isConfigured) promofireConfigurator.configurationJob()?.join()
+        promofireConfigurator.configurationJob()?.join()
     }
 }

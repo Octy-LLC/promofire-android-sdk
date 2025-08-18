@@ -3,13 +3,11 @@ package io.promofire.config
 import io.promofire.models.UserInfo
 
 public class PromofireConfig internal constructor(
-    internal val projectName: String,
     internal val secret: String,
     internal val userInfo: UserInfo?,
 ) {
 
     public class Builder(
-        private val projectName: String,
         private val secret: String,
     ) {
 
@@ -20,7 +18,6 @@ public class PromofireConfig internal constructor(
         }
 
         public fun build(): PromofireConfig = PromofireConfig(
-            projectName = projectName,
             secret = secret,
             userInfo = userInfo,
         )

@@ -1,14 +1,14 @@
 [versions]
 # Android gradle plugin
-androidGradlePlugin = "8.7.2"
+androidGradlePlugin = "8.12.0"
 # Kotlin
-kotlin = "2.1.0-RC2"
-kotlinXSerialization = "1.7.3"
-kotlinxCoroutines = "1.9.0"
+kotlin = "2.2.0"
+kotlinXSerialization = "1.9.0"
+kotlinxCoroutines = "1.10.2"
 # Ktor
-ktor = "3.0.1"
+ktor = "3.2.3"
 # Detekt
-detekt = "1.23.7"
+detekt = "1.23.8"
 # Test
 junit = "4.13.2"
 
