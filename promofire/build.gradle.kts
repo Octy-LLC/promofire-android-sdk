@@ -17,17 +17,23 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 24
 
         buildConfigField(
             "String",
             "VERSION_NAME",
-            "\"0.2.0\""
+            "\"1.0.0-beta.1\""
         )
     }
 
     buildFeatures {
         buildConfig = true
+    }
+
+    testOptions {
+        // android.util.Log и Build недоступны в JVM-тестах; без этого
+        // любой вызов логгера падает с "not mocked".
+        unitTests.isReturnDefaultValues = true
     }
 
     buildTypes {
@@ -65,4 +71,6 @@ dependencies {
 
     // Test
     testImplementation(libs.junit)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

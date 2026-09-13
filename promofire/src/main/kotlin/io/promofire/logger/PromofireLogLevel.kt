@@ -1,8 +1,19 @@
 package io.promofire.logger
 
-internal enum class PromofireLogLevel {
-    VERBOSE,
+/** Уровни журналирования SDK. */
+public enum class PromofireLogLevel {
+    /** Молчит. */
+    NONE,
+
+    /** Только ошибки. */
+    ERROR,
+
+    /** Ошибки, события аутентификации и строки вида «метод, путь, статус». */
     INFO,
-    WARNING,
-    ERROR
+
+    /**
+     * Всё перечисленное плюс тела запросов и ответов.
+     * В них бывают персональные данные — в продакшене включать не стоит.
+     */
+    DEBUG,
 }

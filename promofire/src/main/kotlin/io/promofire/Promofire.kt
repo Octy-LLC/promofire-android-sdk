@@ -1,173 +1,194 @@
 package io.promofire
 
-import android.app.Application
-import android.content.Context
-import io.promofire.config.PromofireConfig
-import io.promofire.data.local.PreferencesStorage
+import io.ktor.http.HttpMethod
+import io.promofire.internal.ApiClient
+import io.promofire.internal.AuthRequestDto
+import io.promofire.internal.AuthResponseDto
+import io.promofire.internal.PromofireJson
 import io.promofire.logger.Logger
-import io.promofire.models.Code
-import io.promofire.models.CodeRedeems
-import io.promofire.models.CodeTemplate
-import io.promofire.models.CodeTemplates
-import io.promofire.models.Codes
+import io.promofire.logger.PromofireLogLevel
 import io.promofire.models.Customer
-import io.promofire.models.params.GenerateCodeParams
-import io.promofire.models.params.GenerateCodesParams
-import io.promofire.models.params.UpdateCodeParams
-import io.promofire.models.params.UpdateCustomerParams
+import io.promofire.models.CustomerProfile
+import io.promofire.models.DeviceInfo
+import io.promofire.models.Platform
+import io.promofire.resources.CodeTemplatesResource
+import io.promofire.resources.CodesResource
+import io.promofire.resources.CustomerResource
 import io.promofire.utils.AndroidDeviceSpecsProvider
-import io.promofire.utils.EmptyResultCallback
-import io.promofire.utils.PromofireResult
-import io.promofire.utils.ResultCallback
-import java.util.Date
-import kotlin.concurrent.Volatile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
+private const val SECRET_LENGTH = 64
+private val HEX = Regex("^[0-9a-fA-F]+$")
+
+/**
+ * Точка входа в SDK.
+ *
+ * Порядок обязателен: [configure], затем [connect] или [identify], и только
+ * потом всё остальное. Любое обращение до [configure] бросает
+ * `NOT_CONFIGURED`, любой запрос до аутентификации — `NOT_AUTHENTICATED`.
+ *
+ * Все публичные методы, кроме [configure] и [disconnect], приостанавливаемые.
+ * Внутреннее состояние защищено мьютексом, вызывать можно из любого потока.
+ */
 public object Promofire {
 
-    private var _promofireImpl: PromofireImpl? = null
-    private val promofireImpl: PromofireImpl
-        get() = _promofireImpl!!
+    private val mutex = Mutex()
+    private val logger = Logger()
+    private val deviceSpecs = AndroidDeviceSpecsProvider()
 
+    private var config: PromofireConfig? = null
+    private var api: ApiClient? = null
+    private var lastAuth: AuthParams? = null
+
+    /** Токен живёт только в памяти и на диск не попадает. */
     @Volatile
-    public var isInitialized: Boolean = false
-        private set
+    private var token: String? = null
 
-    public var isDebug: Boolean
-        get() = Logger.isDebug
-        set(value) {
-            Logger.isDebug = value
+    private var codesResource: CodesResource? = null
+    private var templatesResource: CodeTemplatesResource? = null
+    private var customerResource: CustomerResource? = null
+
+    public val isConfigured: Boolean get() = config != null
+
+    public val isAuthenticated: Boolean get() = token != null
+
+    public val codes: CodesResource
+        get() = codesResource ?: throw promofireError(PromofireException.Code.NOT_CONFIGURED)
+
+    public val codeTemplates: CodeTemplatesResource
+        get() = templatesResource ?: throw promofireError(PromofireException.Code.NOT_CONFIGURED)
+
+    public val customer: CustomerResource
+        get() = customerResource ?: throw promofireError(PromofireException.Code.NOT_CONFIGURED)
+
+    /**
+     * Настраивает SDK. Синхронен и ничего не отправляет по сети — можно
+     * вызывать при старте приложения.
+     */
+    public fun configure(config: PromofireConfig) {
+        if (config.secret.length != SECRET_LENGTH || !HEX.matches(config.secret)) {
+            throw promofireError(
+                code = PromofireException.Code.VALIDATION_ERROR,
+                message = "secret must be a $SECRET_LENGTH-character hex string, " +
+                    "got ${config.secret.length} characters",
+            )
         }
 
-    private val notInitializedError = PromofireResult.Error(
-        error = IllegalStateException("Promofire was not initialized")
+        val baseUrl = config.baseUrl.trimEnd('/')
+
+        // Спека: debug по умолчанию, когда baseUrl переопределён, иначе error.
+        logger.level = config.logLevel ?: when (baseUrl) {
+            PromofireConfig.DEFAULT_BASE_URL -> PromofireLogLevel.ERROR
+            else -> PromofireLogLevel.DEBUG
+        }
+
+        val client = ApiClient(
+            baseUrl = baseUrl,
+            timeoutMillis = config.timeoutMillis,
+            userAgent = "PromofireSDK/${BuildConfig.VERSION_NAME} ANDROID/${deviceSpecs.osVersion}",
+            logger = logger,
+            tokenProvider = { token },
+            reauthenticate = ::reauthenticate,
+        )
+
+        this.config = config
+        this.api = client
+        this.codesResource = CodesResource(client)
+        this.templatesResource = CodeTemplatesResource(client)
+        this.customerResource = CustomerResource(client)
+
+        logger.log(PromofireLogLevel.INFO, "configured for $baseUrl")
+    }
+
+    /** Анонимная аутентификация: создаёт клиента без идентификатора. */
+    public suspend fun connect(device: DeviceInfo): Customer =
+        authenticate(AuthParams(device = device))
+
+    /**
+     * Аутентификация с привязкой к пользователю приложения.
+     *
+     * Если клиент с таким [customerUserId] уже есть, возвращается он;
+     * иначе создаётся новый.
+     */
+    public suspend fun identify(
+        customerUserId: String,
+        device: DeviceInfo,
+        profile: CustomerProfile? = null,
+    ): Customer = authenticate(
+        AuthParams(device = device, customerUserId = customerUserId, profile = profile),
     )
 
-    @Synchronized
-    public fun initialize(context: Context) {
-        require(context.applicationContext is Application) { "Application context is required" }
-
-        synchronized(this) {
-            if (isInitialized) {
-                return
-            }
-
-            val storage = PreferencesStorage(context.applicationContext)
-            val deviceSpecsProvider = AndroidDeviceSpecsProvider(context.applicationContext)
-            _promofireImpl = PromofireImpl(storage, deviceSpecsProvider)
-            isInitialized = true
-        }
+    /** Забывает токен и параметры сессии. */
+    public fun disconnect() {
+        token = null
+        lastAuth = null
+        logger.log(PromofireLogLevel.INFO, "disconnected")
     }
 
-    public fun activate(config: PromofireConfig, callback: EmptyResultCallback) {
-        if (!checkInitialized(callback)) return
+    /**
+     * Есть ли у тенанта хоть один шаблон, из которого клиент может выпустить
+     * себе код. Бэкенд отдаёт клиенту только активные шаблоны с
+     * `isUsableByCustomers`, поэтому достаточно проверить, что список непуст.
+     */
+    public suspend fun isCodeGenerationAvailable(): Boolean =
+        codeTemplates.list(limit = 1).total > 0
 
-        promofireImpl.configureSdk(config, callback)
+    private suspend fun authenticate(params: AuthParams): Customer {
+        requestToken(params)
+        mutex.withLock { lastAuth = params }
+
+        return customer.getProfile()
     }
 
-    public fun isCodeGenerationAvailable(callback: ResultCallback<Boolean>) {
-        if (checkInitialized(callback)) return
+    /**
+     * Повторяет последнюю аутентификацию теми же параметрами.
+     * Вызывается HTTP-слоем при 401.
+     */
+    private suspend fun reauthenticate() {
+        val params = mutex.withLock { lastAuth }
+            ?: throw promofireError(PromofireException.Code.NOT_AUTHENTICATED)
 
-        promofireImpl.isCodeGenerationAvailable(callback)
+        token = null
+        requestToken(params)
     }
 
-    public fun getCurrentUserCodes(limit: Int, offset: Int, callback: ResultCallback<Codes>) {
-        if (checkInitialized(callback)) return
+    private suspend fun requestToken(params: AuthParams) {
+        val currentConfig = config ?: throw promofireError(PromofireException.Code.NOT_CONFIGURED)
+        val client = api ?: throw promofireError(PromofireException.Code.NOT_CONFIGURED)
 
-        promofireImpl.getCurrentUserCodes(limit, offset, callback)
+        val request = AuthRequestDto(
+            secret = currentConfig.secret,
+            platform = Platform.ANDROID,
+            device = deviceSpecs.deviceName,
+            os = deviceSpecs.osVersion,
+            appBuild = params.device.appBuild,
+            appVersion = params.device.appVersion,
+            sdkVersion = BuildConfig.VERSION_NAME,
+            customerUserId = params.customerUserId,
+            firstName = params.profile?.firstName,
+            lastName = params.profile?.lastName,
+            email = params.profile?.email,
+            phone = params.profile?.phone,
+        )
+
+        // anonymous: запрос идёт без токена, и 401 на нём не должен запускать
+        // повторную аутентификацию — иначе получится бесконечный цикл.
+        val raw = client.request(
+            method = HttpMethod.Post,
+            path = "/auth/sdk/customer",
+            body = request,
+            anonymous = true,
+        )
+
+        token = PromofireJson.decodeFromString<AuthResponseDto>(raw).accessToken
+
+        logger.log(PromofireLogLevel.INFO, "authenticated")
     }
 
-    public fun getCodeByValue(codeValue: String, callback: ResultCallback<Code>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCodeByValue(codeValue, callback)
-    }
-
-    public fun getCurrentUserRedeems(
-        limit: Int,
-        offset: Int,
-        from: Date,
-        to: Date,
-        codeValue: String? = null,
-        callback: ResultCallback<CodeRedeems>,
-    ) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCurrentUserRedeems(limit, offset, from, to, codeValue, callback)
-    }
-
-    public fun getCampaigns(limit: Int, offset: Int, callback: ResultCallback<CodeTemplates>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCampaigns(limit, offset, callback)
-    }
-
-    public fun getCampaignBy(id: String, callback: ResultCallback<CodeTemplate>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCampaignBy(id, callback)
-    }
-
-    public fun generateCode(params: GenerateCodeParams, callback: ResultCallback<Code>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.generateCode(params, callback)
-    }
-
-    public fun generateCodes(params: GenerateCodesParams, callback: ResultCallback<List<Code>>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.generateCodes(params, callback)
-    }
-
-    public fun updateCode(codeValue: String, params: UpdateCodeParams, callback: ResultCallback<Code>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.updateCode(codeValue, params, callback)
-    }
-
-    public fun redeemCode(codeValue: String, callback: EmptyResultCallback) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.redeemCode(codeValue, callback)
-    }
-
-    public fun getCurrentUser(callback: ResultCallback<Customer>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCurrentUser(callback)
-    }
-
-    public fun updateCurrentUser(params: UpdateCustomerParams, callback: ResultCallback<Customer>) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.updateCurrentUser(params, callback)
-    }
-
-    public fun getCodeRedeems(
-        limit: Int,
-        offset: Int,
-        from: Date,
-        to: Date,
-        codeValue: String? = null,
-        redeemerId: String? = null,
-        callback: ResultCallback<CodeRedeems>,
-    ) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.getCodeRedeems(limit, offset, from, to, codeValue, redeemerId, callback)
-    }
-
-    public fun logout(callback: EmptyResultCallback) {
-        if (checkInitialized(callback)) return
-
-        promofireImpl.logout(callback)
-    }
-
-    private fun checkInitialized(callback: ResultCallback<*>): Boolean {
-        if (!isInitialized) {
-            callback.onResult(notInitializedError)
-            return false
-        }
-        return true
-    }
+    private data class AuthParams(
+        val device: DeviceInfo,
+        val customerUserId: String? = null,
+        val profile: CustomerProfile? = null,
+    )
 }
