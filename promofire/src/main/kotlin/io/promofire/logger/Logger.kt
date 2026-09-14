@@ -1,31 +1,23 @@
 package io.promofire.logger
 
-import io.promofire.logger.PromofireLogLevel.ERROR
-import io.promofire.logger.PromofireLogLevel.INFO
-import io.promofire.logger.PromofireLogLevel.VERBOSE
-import io.promofire.logger.PromofireLogLevel.WARNING
+import android.util.Log
 
-internal interface Logger {
+internal class Logger(
+    @Volatile var level: PromofireLogLevel = PromofireLogLevel.ERROR,
+) {
 
-    companion object : Logger by AndroidConsoleLogger()
+    fun log(level: PromofireLogLevel, message: String, throwable: Throwable? = null) {
+        if (level == PromofireLogLevel.NONE || level.ordinal > this.level.ordinal) return
 
-    var isDebug: Boolean
+        when (level) {
+            PromofireLogLevel.ERROR -> Log.e(TAG, message, throwable)
+            PromofireLogLevel.INFO -> Log.i(TAG, message, throwable)
+            PromofireLogLevel.DEBUG -> Log.d(TAG, message, throwable)
+            PromofireLogLevel.NONE -> Unit
+        }
+    }
 
-    fun log(level: PromofireLogLevel, message: String, throwable: Throwable? = null)
-}
-
-internal fun Logger.Companion.v(message: String) {
-    Logger.log(VERBOSE, message)
-}
-
-internal fun Logger.Companion.i(message: String) {
-    Logger.log(INFO, message)
-}
-
-internal fun Logger.Companion.w(message: String, throwable: Throwable? = null) {
-    Logger.log(WARNING, message, throwable)
-}
-
-internal fun Logger.Companion.e(message: String, throwable: Throwable? = null) {
-    Logger.log(ERROR, message, throwable)
+    private companion object {
+        const val TAG = "Promofire"
+    }
 }

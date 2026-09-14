@@ -1,6 +1,8 @@
 package io.promofire.models.params
 
 public data class UpdateCodeParams(
-    val isActive: Boolean,
-    val payload: String? = null,
+    /** Включить или отключить код. */
+    val active: Boolean? = null,
+    /** Работает только если у шаблона `hasMutablePayload`. */
+    val payload: Map<String, String>? = null,
 )
