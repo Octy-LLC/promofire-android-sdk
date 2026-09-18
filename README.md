@@ -143,3 +143,33 @@ Promofire.configure(
 ```bash
 JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :promofire:detekt
 ```
+
+### Прогон против живого бэкенда
+
+`:promofire:testDebugUnitTest` герметичен: он работает без сети, на подставном
+транспорте. Отдельно есть `LiveTest` — тот же набор проверок, что и у
+TypeScript-SDK, но против настоящего API. Он находит то, чего подставной
+транспорт показать не может: расхождения в форме ответа, коды ошибок,
+единицы измерения дат.
+
+В обычный прогон он не входит и включается свойством `promofire.live`:
+
+```bash
+# в promofire-backend/app — поднять бэкенд и завести тенанта
+DB_HOST=127.0.0.1 DB_PORT=5433 node scripts/seed-dev-tenant.js
+
+# здесь, с ANDROID-секретом из вывода скрипта
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
+  ./gradlew :promofire:testDebugUnitTest \
+  -Ppromofire.live \
+  -Ppromofire.secret=<секрет> \
+  -Ppromofire.url=http://127.0.0.1:3000
+```
+
+Без `-Ppromofire.url` набор идёт на `http://127.0.0.1:3000`; чтобы проверить
+стейдж, передайте `https://api.stage.promofire.io` и секрет его тенанта.
+
+Скрипт засева заводит две кампании, различающиеся только `hasMutablePayload`:
+иначе проверку «payload неизменяемой кампании клиент не переписывает» не на чем
+выполнить и она пропускается. Против тенанта, заведённого не скриптом, она
+может пропуститься по той же причине.
