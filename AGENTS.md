@@ -30,11 +30,25 @@
 implementation("io.promofire:sdk:1.0.0-beta.1")
 ```
 
-Пока не опубликовано — подключением локального модуля. В `settings.gradle.kts`:
+Пока не опубликовано — из локального репозитория Maven. В каталоге SDK:
+
+```bash
+./gradlew :promofire:publishToMavenLocal
+```
+
+В `settings.gradle.kts` приложения — `mavenLocal()` последним в списке, чтобы он не перекрывал Maven Central:
 
 ```kotlin
-includeBuild("../promofire-android-sdk")
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
+}
 ```
+
+Строка зависимости та же, что и после публикации. `includeBuild` не подойдёт: Gradle подставляет проект по его имени, `promofire`, а координата пакета — `io.promofire:sdk`.
 
 Требуется `minSdk` не ниже 24 и JDK 21 для сборки.
 

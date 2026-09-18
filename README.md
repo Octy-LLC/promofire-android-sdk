@@ -16,6 +16,26 @@ Kotlin, корутины, Ktor. Минимальная версия — Android 
 implementation("io.promofire:sdk:1.0.0-beta.1")
 ```
 
+Пока не опубликовано — из локального репозитория Maven. В каталоге SDK:
+
+```bash
+./gradlew :promofire:publishToMavenLocal
+```
+
+В `settings.gradle.kts` приложения — `mavenLocal()` последним в списке, чтобы он не перекрывал Maven Central:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+    }
+}
+```
+
+Строка зависимости та же, что и после публикации. `includeBuild` не подойдёт: Gradle подставляет проект по его имени, `promofire`, а координата пакета — `io.promofire:sdk`.
+
 ## Быстрый старт
 
 Порядок обязателен: `configure` → `connect` или `identify` → всё остальное. Обращение к SDK до `configure` бросает `NOT_CONFIGURED`, запрос до аутентификации — `NOT_AUTHENTICATED`.
