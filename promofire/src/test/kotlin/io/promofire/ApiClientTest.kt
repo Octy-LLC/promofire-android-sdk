@@ -8,10 +8,13 @@ import io.ktor.http.headersOf
 import io.ktor.http.HttpHeaders
 import io.ktor.http.ContentType
 import io.promofire.internal.ApiClient
+import io.promofire.internal.AuthRequestDto
 import io.promofire.logger.Logger
 import io.promofire.logger.PromofireLogLevel
+import io.promofire.models.Platform
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -49,6 +52,46 @@ class ApiClientTest {
         )
     }
 
+
+    @Test
+    fun `в журнал DEBUG не попадают ни секрет, ни токен`() = runTest {
+        val secret = "b".repeat(64)
+        val token = "eyJhbGciOi.payload.signature"
+        val logged = mutableListOf<String>()
+
+        val client = ApiClient(
+            baseUrl = "https://api.test",
+            timeoutMillis = 1_000,
+            userAgent = "PromofireSDK/test",
+            logger = Logger(PromofireLogLevel.DEBUG) { _, message, _ -> logged += message },
+            tokenProvider = { null },
+            reauthenticate = {},
+            backoffMillis = listOf(1, 1),
+            engine = MockEngine { respond("""{"accessToken":"$token"}""", HttpStatusCode.Created, JSON_HEADERS) },
+        )
+
+        client.request(
+            method = HttpMethod.Post,
+            path = "/auth/sdk/customer",
+            body = AuthRequestDto(
+                secret = secret,
+                platform = Platform.ANDROID,
+                device = "Pixel",
+                os = "Android 15",
+                appBuild = "1",
+                appVersion = "1.0.0",
+                sdkVersion = "1.0.0-beta.1",
+            ),
+            anonymous = true,
+        )
+
+        val journal = logged.joinToString("\n")
+
+        assertFalse("секрет не в журнале", journal.contains(secret))
+        assertFalse("токен не в журнале", journal.contains(token))
+        assertTrue("тела всё равно печатаются", journal.contains("request body") && journal.contains("response body"))
+        assertTrue("остальное тело на месте", journal.contains("platform=ANDROID"))
+    }
 
     @Test
     fun `повторяет 5xx дважды и отдаёт SERVER_ERROR`() = runTest {

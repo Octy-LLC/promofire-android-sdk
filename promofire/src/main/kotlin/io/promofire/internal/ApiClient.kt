@@ -162,7 +162,9 @@ internal class ApiClient(
         }
 
         logger.log(PromofireLogLevel.INFO, "${method.value} $path")
-        if (body != null) logger.log(PromofireLogLevel.DEBUG, "request body: $body")
+        if (body != null) {
+            logger.log(PromofireLogLevel.DEBUG) { "request body: ${redactCredentials(body.toString())}" }
+        }
 
         val response = try {
             client.request(baseUrl + path) {
@@ -197,7 +199,7 @@ internal class ApiClient(
         val status = response.status.value
 
         logger.log(PromofireLogLevel.INFO, "${method.value} $path -> $status")
-        logger.log(PromofireLogLevel.DEBUG, "response body: $raw")
+        logger.log(PromofireLogLevel.DEBUG) { "response body: ${redactCredentials(raw)}" }
 
         if (status in SUCCESS_RANGE_START..SUCCESS_RANGE_END) return raw
 

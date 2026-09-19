@@ -18,6 +18,7 @@ public data class PromofireConfig(
      * По умолчанию [PromofireLogLevel.ERROR], а при переопределённом [baseUrl] —
      * [PromofireLogLevel.DEBUG]. Уровень `DEBUG` печатает тела запросов и ответов:
      * там бывают персональные данные, в продакшене его включать не стоит.
+     * SDK-секрет и токен клиента маскируются.
      */
     val logLevel: PromofireLogLevel? = null,
     /** Таймаут запроса в миллисекундах. */
